@@ -1,5 +1,3 @@
-// ForumScreen.js - updated with navigation to PostDetailScreen
-
 import { useState, useEffect } from 'react';
 import {
   View,
@@ -21,11 +19,8 @@ import { useNavigation } from '@react-navigation/native';
 export default function ForumScreen() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ title: '', content: '', media: null });
-  const [commentInputs, setCommentInputs] = useState({});
-  const [replyInputs, setReplyInputs] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState('Anonymous');
-  const [expandedPosts, setExpandedPosts] = useState({});
   const colorScheme = useColorScheme();
   const navigation = useNavigation();
 
@@ -83,91 +78,10 @@ export default function ForumScreen() {
     });
   };
 
-  const addComment = (postId) => {
-    const text = commentInputs[postId];
-    if (!text?.trim()) return;
-
-    const updated = posts.map((p) => {
-      if (p.id === postId) {
-        return {
-          ...p,
-          comments: [
-            {
-              id: Date.now().toString(),
-              content: text,
-              author: currentUser,
-              timestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
-              likes: {},
-              replies: [],
-            },
-            ...p.comments,
-          ],
-        };
-      }
-      return p;
-    });
-
-    savePosts(updated);
-    setCommentInputs({ ...commentInputs, [postId]: '' });
-  };
-
-  const addReply = (postId, commentId) => {
-    const text = replyInputs[commentId];
-    if (!text?.trim()) return;
-
-    const updated = posts.map((p) => {
-      if (p.id === postId) {
-        const comments = p.comments.map((c) => {
-          if (c.id === commentId) {
-            return {
-              ...c,
-              replies: [
-                ...c.replies,
-                {
-                  id: Date.now().toString(),
-                  content: text,
-                  author: currentUser,
-                  timestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
-                },
-              ],
-            };
-          }
-          return c;
-        });
-        return { ...p, comments };
-      }
-      return p;
-    });
-
-    savePosts(updated);
-    setReplyInputs({ ...replyInputs, [commentId]: '' });
-  };
-
-  const deleteComment = (postId, commentId) => {
-    Alert.alert('Delete?', 'Are you sure you want to delete this comment?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Yes',
-        onPress: () => {
-          const updated = posts.map((p) => {
-            if (p.id === postId) {
-              return {
-                ...p,
-                comments: p.comments.filter((c) => c.id !== commentId),
-              };
-            }
-            return p;
-          });
-          savePosts(updated);
-        },
-      },
-    ]);
-  };
-
   const toggleLike = (postId) => {
     const updated = posts.map((p) => {
       if (p.id === postId) {
-        const liked = p.likes[currentUser];
+        const liked = p.likes?.[currentUser];
         return {
           ...p,
           likes: { ...p.likes, [currentUser]: !liked },
@@ -240,7 +154,9 @@ export default function ForumScreen() {
               <Image source={{ uri: item.media }} style={{ width: '100%', height: 200, borderRadius: 10 }} />
             )}
             <TouchableOpacity onPress={() => toggleLike(item.id)}>
-              <Text style={styles.likeText}>👍 {Object.values(item.likes).filter(Boolean).length}</Text>
+              <Text style={styles.likeText}>
+                👍 {Object.values(item.likes || {}).filter(Boolean).length}
+              </Text>
             </TouchableOpacity>
           </View>
         )}

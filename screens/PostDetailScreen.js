@@ -1,12 +1,9 @@
-// PostDetailScreen.js - Updated with video upload, dark mode, likes, share, categories, and notifications
-
 import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  FlatList,
   TouchableOpacity,
   Alert,
   Share,
@@ -43,7 +40,16 @@ export default function PostDetailScreen({ route }) {
     if (savedPosts) {
       const posts = JSON.parse(savedPosts);
       const found = posts.find(p => p.id === postId);
-      setPost(found);
+      if (found) {
+        // Ensure comments and replies are arrays
+        found.comments = Array.isArray(found.comments) ? found.comments : [];
+        found.comments = found.comments.map(c => ({
+          ...c,
+          replies: Array.isArray(c.replies) ? c.replies : [],
+          likes: c.likes || {},
+        }));
+        setPost(found);
+      }
     }
   };
 
@@ -83,7 +89,8 @@ export default function PostDetailScreen({ route }) {
 
   const addReply = async (commentId) => {
     const text = replyInputs[commentId];
-    if (!text.trim()) return;
+    if (!text?.trim()) return;
+
     const updatedComments = post.comments.map((c) => {
       if (c.id === commentId) {
         return {
@@ -191,7 +198,7 @@ export default function PostDetailScreen({ route }) {
             </TouchableOpacity>
           )}
 
-          {c.replies.map(r => (
+          {(c.replies || []).map(r => (
             <View key={r.id} style={styles.replyBox}>
               <Text style={styles.commentAuthor}>{r.author}</Text>
               <Text>{r.content}</Text>
